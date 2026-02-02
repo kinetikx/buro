@@ -12,7 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 email: { label: "Email", type: "email" },
                 password: { label: "Password", type: "password" }
             },
-            async authorize(credentials) {
+            async authorize(credentials: any) {
                 const parsedCredentials = z
                     .object({ email: z.string().email(), password: z.string().min(6) })
                     .safeParse(credentials);
@@ -32,7 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         id: user.id,
                         name: user.name,
                         email: user.email,
-                        role: user.role,
+                        role: user.role as 'ADMIN' | 'EDITOR',
                     };
                 }
 
