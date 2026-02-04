@@ -35,11 +35,14 @@ export default function Header() {
         setIsOpen(false)
     }, [pathname])
 
+    const isTransparentPage = pathname === '/' || pathname === '/hakkimizda'
+    const showSolidHeader = scrolled || !isTransparentPage
+
     return (
         <header
             className={cn(
                 'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-                scrolled
+                showSolidHeader
                     ? 'bg-white/95 backdrop-blur-md shadow-sm py-4'
                     : 'bg-transparent py-6'
             )}
@@ -49,7 +52,7 @@ export default function Header() {
                 <Link href="/" className="relative z-50">
                     <div className={cn(
                         "font-heading font-bold text-2xl transition-colors",
-                        scrolled ? "text-navy-900" : "text-white"
+                        showSolidHeader ? "text-navy-900" : "text-white"
                     )}>
                         KOMLU<span className="text-gold-400">HUKUK</span>
                     </div>
@@ -65,7 +68,7 @@ export default function Header() {
                                 'text-sm font-medium transition-colors hover:text-gold-400',
                                 pathname === item.href
                                     ? 'text-gold-400'
-                                    : scrolled ? 'text-navy-600' : 'text-gray-200'
+                                    : showSolidHeader ? 'text-[#1a365d]' : 'text-gray-200'
                             )}
                         >
                             {item.name}
@@ -73,7 +76,7 @@ export default function Header() {
                     ))}
                     <Link href="https://wa.me/905416255626" target="_blank">
                         <Button
-                            variant={scrolled ? 'primary' : 'secondary'}
+                            variant={showSolidHeader ? 'primary' : 'secondary'}
                             size="sm"
                             className="gap-2"
                         >
@@ -88,7 +91,7 @@ export default function Header() {
                     onClick={() => setIsOpen(!isOpen)}
                     className={cn(
                         "lg:hidden relative z-50 p-2",
-                        isOpen ? "text-white" : scrolled ? "text-navy-900" : "text-white"
+                        isOpen ? "text-white" : showSolidHeader ? "text-navy-900" : "text-white"
                     )}
                     aria-label="Menu"
                 >

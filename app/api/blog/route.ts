@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
                 take: limit,
                 include: {
                     author: true,
-                    category: true,
+                    categories: true,
                 },
                 orderBy: {
                     createdAt: 'desc',
@@ -70,14 +70,21 @@ export async function POST(request: NextRequest) {
             // In real app, trust validation
         }
 
-        const { title, content, categoryId, status, metaTitle, metaDesc } = body;
+        const { title, content, categoryIds, status, coverImage, metaTitle, metaDesc } = body;
 
         // Generate slug from title
         const slug = title
             .toLowerCase()
+            .replace(/ğ/g, 'g')
+            .replace(/ü/g, 'u')
+            .replace(/ş/g, 's')
+            .replace(/ı/g, 'i')
+            .replace(/İ/g, 'i')
+            .replace(/ö/g, 'o')
+            .replace(/ç/g, 'c')
             .replace(/[^a-z0-9\s-]/g, '')
             .replace(/\s+/g, '-')
-            .replace(/-+/g, '-') + '-' + Date.now();
+            .replace(/-+/g, '-') + '-' + Date.now().toString().slice(-4);
 
         const post = await prisma.blogPost.create({
             data: {
@@ -85,10 +92,13 @@ export async function POST(request: NextRequest) {
                 content,
                 slug,
                 excerpt: content.substring(0, 150) + '...', // Auto excerpt
+                coverImage,
                 published: status === 'published',
                 publishedAt: status === 'published' ? new Date() : null,
                 authorId: session.user.id,
-                categoryId: categoryId, // Assuming categoryId is valid UUID from frontend
+                categories: {
+                    connect: categoryIds.map((id: string) => ({ id }))
+                },
                 metaTitle,
                 metaDesc
             },

@@ -38,8 +38,7 @@ model BlogPost {
   // Relations
   authorId      String
   author        User       @relation(fields: [authorId], references: [id])
-  categoryId    String
-  category      Category   @relation(fields: [categoryId], references: [id])
+  categories    Category[]
   tags          Tag[]
   
   createdAt     DateTime   @default(now())
@@ -47,7 +46,6 @@ model BlogPost {
   
   @@index([slug])
   @@index([published])
-  @@index([categoryId])
 }
 
 model Category {
@@ -79,6 +77,21 @@ model ContactMessage {
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
   
+  
   @@index([createdAt])
   @@index([isRead])
+}
+
+model SiteSettings {
+  id              String   @id @default(cuid())
+  siteName        String   @default("Komlu Hukuk")
+  siteDescription String?
+  contactEmail    String?
+  contactPhone    String?
+  address         String?
+  facebookUrl     String?
+  twitterUrl      String?
+  instagramUrl    String?
+  linkedinUrl     String?
+  updatedAt       DateTime @updatedAt
 }

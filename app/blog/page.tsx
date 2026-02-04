@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { getAllBlogPosts, getCategories } from '@/lib/db'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { stripHtml } from '@/lib/utils'
 
 export const metadata: Metadata = {
     title: 'Blog & Hukuki Makaleler | Komlu Hukuk Bürosu',
@@ -16,15 +17,15 @@ export const metadata: Metadata = {
 }
 
 interface BlogPageProps {
-    searchParams: {
+    searchParams: Promise<{
         page?: string
         category?: string
-    }
+    }>
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
-    const page = Number(searchParams.page) || 1
-    const categorySlug = searchParams.category
+    const { page: pageParam, category: categorySlug } = await searchParams
+    const page = Number(pageParam) || 1
 
     const [postsData, categoriesData] = await Promise.all([
         getAllBlogPosts({ page, limit: 10, category: categorySlug }),
@@ -105,23 +106,17 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                                     posts.map((post) => (
                                         <article key={post.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
                                             <Link href={`/blog/${post.slug}`} className="relative h-48 bg-gray-200 block">
-                                                {post.coverImage ? (
-                                                    <Image
-                                                        src={post.coverImage}
-                                                        alt={post.title}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-navy-50">
-                                                        <span className="text-sm">Görsel Yok</span>
-                                                    </div>
-                                                )}
+                                                <Image
+                                                    src={post.coverImage || '/hero-image.png'}
+                                                    alt={post.title}
+                                                    fill
+                                                    className="object-cover"
+                                                />
                                             </Link>
                                             <div className="p-6 flex flex-col flex-grow">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <span className="text-xs font-bold text-gold-600 uppercase tracking-wider">
-                                                        {post.category.name}
+                                                        {post.categories[0]?.name || 'Genel'}
                                                     </span>
                                                     <span className="text-xs text-gray-500 flex items-center gap-1">
                                                         <Calendar className="w-3 h-3" />
@@ -136,7 +131,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                                                 </h2>
 
                                                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                                                    {post.excerpt}
+                                                    {post.excerpt ? stripHtml(post.excerpt) : ''}
                                                 </p>
 
                                                 <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">

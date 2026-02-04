@@ -20,7 +20,7 @@ export const getAllBlogPosts = cache(async (options?: {
     const categorySlug = options?.category
 
     const where = categorySlug ? {
-        category: { slug: categorySlug },
+        categories: { some: { slug: categorySlug } },
         published: true,
     } : {
         published: true,
@@ -33,7 +33,7 @@ export const getAllBlogPosts = cache(async (options?: {
             take: limit,
             include: {
                 author: true,
-                category: true,
+                categories: true,
                 tags: true,
             },
             orderBy: { publishedAt: 'desc' },
@@ -59,7 +59,7 @@ export const getBlogPost = cache(async (slug: string) => {
             where: { slug },
             include: {
                 author: true,
-                category: true,
+                categories: true,
                 tags: true,
             },
         })

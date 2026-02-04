@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { getAllBlogPosts } from '@/lib/db'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { stripHtml } from '@/lib/utils'
 
 export default async function LatestBlog() {
     const { posts } = await getAllBlogPosts({ limit: 3 })
@@ -35,25 +36,18 @@ export default async function LatestBlog() {
                             <article key={post.id} className="group bg-navy-50 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full">
                                 <Link href={`/blog/${post.slug}`} className="relative h-48 overflow-hidden">
                                     <div className="absolute inset-0 bg-navy-900/20 group-hover:bg-navy-900/10 transition-colors z-10" />
-                                    {post.coverImage ? (
-                                        <Image
-                                            src={post.coverImage}
-                                            alt={post.title}
-                                            fill
-                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full bg-navy-200 flex items-center justify-center text-navy-400">
-                                            <span className="sr-only">{post.title} Görseli</span>
-                                            Görsel Yok
-                                        </div>
-                                    )}
+                                    <Image
+                                        src={post.coverImage || '/hero-image.png'}
+                                        alt={post.title}
+                                        fill
+                                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                    />
                                 </Link>
 
                                 <div className="p-6 flex flex-col flex-grow">
                                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                                         <span className="text-gold-600 font-medium bg-gold-100 px-2 py-1 rounded">
-                                            {post.category.name}
+                                            {post.categories[0]?.name || 'Genel'}
                                         </span>
                                         <div className="flex items-center gap-1">
                                             <Calendar className="w-4 h-4" />
@@ -68,7 +62,7 @@ export default async function LatestBlog() {
                                     </h3>
 
                                     <p className="text-gray-600 mb-6 line-clamp-3">
-                                        {post.excerpt}
+                                        {post.excerpt ? stripHtml(post.excerpt) : ''}
                                     </p>
 
                                     <div className="mt-auto pt-4 border-t border-gray-200">

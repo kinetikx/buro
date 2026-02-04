@@ -13,17 +13,20 @@ const BlogEditor = dynamic(() => import('@/components/blog/blog-editor'), {
     ssr: false,
     loading: () => <div className="h-[500px] w-full bg-gray-50 animate-pulse rounded-lg border border-gray-200" />,
 })
+const ImageUpload = dynamic(() => import('@/components/ui/image-upload'), { ssr: false })
 
 interface Category {
     id: string
     name: string
 }
 
-export default function EditBlogPage({ params }: { params: { id: string } }) {
+export default function EditBlogPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter()
+
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
-    const [categoryId, setCategoryId] = useState('')
+    const [coverImage, setCoverImage] = useState('')
+    const [categoryIds, setCategoryIds] = useState<string[]>([])
     const [status, setStatus] = useState('draft')
     const [metaTitle, setMetaTitle] = useState('')
     const [metaDesc, setMetaDesc] = useState('')
@@ -33,48 +36,65 @@ export default function EditBlogPage({ params }: { params: { id: string } }) {
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        // Fetch categories and post data in parallel
-        Promise.all([
-            fetch('/api/categories').then(res => res.json()),
-            fetch(`/api/blog/${params.id}`).then(res => res.json())
-        ])
-            .then(([categoriesData, postData]) => {
-                setCategories(categoriesData)
+        const fetchParams = async () => {
+            const { id } = await params
+            return id
+        }
 
-                if (postData.error) {
-                    alert('Yazı bulunamadı')
-                    router.push('/admin/blog')
-                    return
-                }
+        fetchParams().then(id => {
+            // Fetch categories and post data in parallel
+            Promise.all([
+                fetch('/api/categories').then(res => res.json()),
+                fetch(`/api/blog/${id}`).then(res => res.json())
+            ])
+                .then(([categoriesData, postData]) => {
+                    setCategories(categoriesData)
 
-                setTitle(postData.title)
-                setContent(postData.content)
-                setCategoryId(postData.categoryId)
-                setStatus(postData.published ? 'published' : 'draft')
-                setMetaTitle(postData.metaTitle || '')
-                setMetaDesc(postData.metaDesc || '')
-            })
-            .catch(err => console.error('Failed to fetch data', err))
-            .finally(() => setIsLoading(false))
-    }, [params.id])
+                    if (postData.error) {
+                        alert('Yazı bulunamadı')
+                        router.push('/admin/blog')
+                        return
+                    }
+
+                    setTitle(postData.title)
+                    setContent(postData.content)
+                    setCoverImage(postData.coverImage || '')
+                    // Map existing categories to IDs
+                    if (postData.categories) {
+                        setCategoryIds(postData.categories.map((c: any) => c.id))
+                    } else if (postData.categoryId) {
+                        // Fallback for old data if any
+                        setCategoryIds([postData.categoryId])
+                    }
+                    setStatus(postData.published ? 'published' : 'draft')
+                    setMetaTitle(postData.metaTitle || '')
+                    setMetaDesc(postData.metaDesc || '')
+                })
+                .catch(err => console.error('Failed to fetch data', err))
+                .finally(() => setIsLoading(false))
+        })
+
+    }, [params])
 
     const handleSave = async () => {
-        if (!title || !content || !categoryId) {
-            alert('Lütfen başlık, içerik ve kategori alanlarını doldurunuz.')
+        if (!title || !content || categoryIds.length === 0) {
+            alert('Lütfen başlık, içerik ve en az bir kategori seçiniz.')
             return
         }
 
         setIsSubmitting(true)
+        const { id } = await params
 
         try {
-            const res = await fetch(`/api/blog/${params.id}`, {
+            const res = await fetch(`/api/blog/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title,
                     content,
-                    categoryId,
+                    categoryIds,
                     status,
+                    coverImage,
                     metaTitle,
                     metaDesc
                 })
@@ -122,8 +142,23 @@ export default function EditBlogPage({ params }: { params: { id: string } }) {
                         </div>
 
                         <div>
+                            <label className="block text-sm font-medium mb-1">Kapak Görseli</label>
+                            <ImageUpload
+                                value={coverImage}
+                                onChange={setCoverImage}
+                                onRemove={() => setCoverImage('')}
+                            />
+                        </div>
+
+                        <div>
                             <label className="block text-sm font-medium mb-1">İçerik</label>
-                            <BlogEditor content={content} onChange={setContent} />
+                            <BlogEditor
+                                content={content}
+                                onChange={setContent}
+                                categories={categories}
+                                selectedCategoryIds={categoryIds}
+                                onCategoryChange={setCategoryIds}
+                            />
                         </div>
                     </div>
 
@@ -131,19 +166,8 @@ export default function EditBlogPage({ params }: { params: { id: string } }) {
                         <div className="bg-white p-6 rounded-xl border border-gray-200 space-y-4">
                             <h3 className="font-bold text-navy-900 border-b pb-2">Yayın Ayarları</h3>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Kategori</label>
-                                <select
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                    value={categoryId}
-                                    onChange={(e) => setCategoryId(e.target.value)}
-                                >
-                                    <option value="">Seçiniz</option>
-                                    {categories.map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {/* Old Select Removed */}
+                            {/* Categories are now in BlogEditor */}
 
                             <div>
                                 <label className="block text-sm font-medium mb-1">Durum</label>

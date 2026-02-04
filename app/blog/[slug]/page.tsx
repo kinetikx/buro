@@ -12,9 +12,10 @@ import { tr } from 'date-fns/locale'
 export async function generateMetadata({
     params
 }: {
-    params: { slug: string }
+    params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-    const post = await getBlogPost(params.slug)
+    const { slug } = await params
+    const post = await getBlogPost(slug)
 
     if (!post) {
         return {
@@ -54,9 +55,10 @@ export async function generateStaticParams() {
 export default async function BlogPostPage({
     params
 }: {
-    params: { slug: string }
+    params: Promise<{ slug: string }>
 }) {
-    const post = await getBlogPost(params.slug)
+    const { slug } = await params
+    const post = await getBlogPost(slug)
 
     if (!post) {
         // For demo/dev purposes if DB is empty, show a mock instead of 404
@@ -89,9 +91,11 @@ export default async function BlogPostPage({
                 {/* Header */}
                 <header className="mb-8">
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
-                        <span className="bg-gold-100 text-gold-800 px-3 py-1 rounded-full font-medium">
-                            {post.category.name}
-                        </span>
+                        {post.categories.map(cat => (
+                            <span key={cat.id} className="bg-gold-100 text-gold-800 px-3 py-1 rounded-full font-medium">
+                                {cat.name}
+                            </span>
+                        ))}
                         <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             {post.publishedAt ? format(post.publishedAt, 'd MMMM yyyy', { locale: tr }) : 'Tarih Yok'}
@@ -118,16 +122,14 @@ export default async function BlogPostPage({
                 </header>
 
                 {/* Cover Image */}
-                {post.coverImage && (
-                    <div className="relative aspect-video mb-12 rounded-2xl overflow-hidden shadow-lg">
-                        <Image
-                            src={post.coverImage}
-                            alt={post.title}
-                            fill
-                            className="object-cover"
-                        />
-                    </div>
-                )}
+                <div className="relative aspect-video mb-12 rounded-2xl overflow-hidden shadow-lg">
+                    <Image
+                        src={post.coverImage || '/hero-image.png'}
+                        alt={post.title}
+                        fill
+                        className="object-cover"
+                    />
+                </div>
 
                 {/* Content */}
                 <div

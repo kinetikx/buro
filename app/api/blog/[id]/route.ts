@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     try {
         const post = await prisma.blogPost.findUnique({
             where: { id },
-            include: { category: true }
+            include: { categories: true }
         })
 
         if (!post) {
@@ -49,7 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     try {
         const body = await request.json()
-        const { title, content, categoryId, status, metaTitle, metaDesc } = body
+        const { title, content, categoryIds, status, coverImage, metaTitle, metaDesc } = body
 
         // Slug generation (only if title changed, but for now allow manual or auto)
         // Ideally we check if title matches existing, etc.
@@ -74,9 +74,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 content,
                 // slug, // Updating slug on edit can break SEO links. Optional.
                 excerpt: content.substring(0, 150) + '...',
+                coverImage,
                 published: status === 'published',
                 publishedAt: status === 'published' ? new Date() : null,
-                categoryId,
+                categories: {
+                    set: [], // Clear existing
+                    connect: categoryIds.map((id: string) => ({ id })) // Add new
+                },
                 metaTitle,
                 metaDesc
             }
