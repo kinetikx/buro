@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Loader2, AlertCircle } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginContent() {
     const searchParams = useSearchParams()
     const callbackUrl = searchParams.get('callbackUrl') || '/admin/blog'
     const error = searchParams.get('error')
@@ -75,5 +75,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-navy-900 flex items-center justify-center text-white">Yükleniyor...</div>}>
+            <LoginContent />
+        </Suspense>
     )
 }
