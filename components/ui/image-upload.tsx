@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { ImagePlus, Trash, X } from 'lucide-react'
+import { ImagePlus } from 'lucide-react'
 
 interface ImageUploadProps {
     value?: string
@@ -76,15 +76,16 @@ export default function ImageUpload({
 
             {value && (
                 <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-gray-200 group">
-                    <Button
-                        type="button"
-                        onClick={onRemove}
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                        <Trash className="w-4 h-4" />
-                    </Button>
+                    <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                            type="button"
+                            onClick={onRemove}
+                            variant="destructive"
+                            size="sm"
+                        >
+                            Sil
+                        </Button>
+                    </div>
                     <Image
                         fill
                         src={value}

@@ -7,7 +7,7 @@ import { z } from 'zod'
 const blogPostSchema = z.object({
     title: z.string().min(3),
     content: z.string().min(10),
-    categoryId: z.string(),
+    categoryIds: z.array(z.string()),
     status: z.enum(['published', 'draft']),
     metaTitle: z.string().optional(),
     metaDesc: z.string().optional(),

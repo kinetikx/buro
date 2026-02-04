@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { cache } from 'react';
 
 const globalForPrisma = globalThis as unknown as {
@@ -8,6 +8,15 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+// Types
+export type BlogPostWithRelations = Prisma.BlogPostGetPayload<{
+    include: {
+        author: true,
+        categories: true,
+        tags: true
+    }
+}>
 
 // Data Fetching Helpers with Cache
 export const getAllBlogPosts = cache(async (options?: {
@@ -53,7 +62,7 @@ export const getAllBlogPosts = cache(async (options?: {
     }
 })
 
-export const getBlogPost = cache(async (slug: string) => {
+export const getBlogPost = cache(async (slug: string): Promise<BlogPostWithRelations | null> => {
     try {
         const post = await prisma.blogPost.findUnique({
             where: { slug },
