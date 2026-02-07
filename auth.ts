@@ -9,11 +9,54 @@ import { loginRateLimiter } from "@/lib/rate-limit"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
-        Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
+        Credentials({
+            name: "Credentials",
+            credentials: {
+                email: { label: "Email", type: "email" },
+                password: { label: "Password", type: "password" }
+            },
+            async authorize(credentials) {
+                const email = credentials?.email as string
+                const password = credentials?.password as string
 
+                if (!email || !password) return null
+
+                // 1. Check if email is allowed
+                const allowedEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim())
+                if (!allowedEmails.includes(email)) {
+                    console.log("Email not allowed:", email)
+                    return null
+                }
+
+                // 2. Check password
+                const envPassword = process.env.ADMIN_PASSWORD
+                if (!envPassword || password !== envPassword) {
+                    console.log("Invalid password")
+                    return null
+                }
+
+                // 3. Find or Create User in DB
+                try {
+                    let user = await prisma.user.findUnique({ where: { email } })
+
+                    if (!user) {
+                        // Create new admin user
+                        user = await prisma.user.create({
+                            data: {
+                                email,
+                                name: 'Admin',
+                                role: 'ADMIN',
+                                passwordHash: '', // Not used for this simple auth
+                            }
+                        })
+                    }
+                    return user as any
+                } catch (error) {
+                    console.error("Auth error:", error)
+                    return null
+                }
+            }
+        })
     ],
     session: {
         strategy: "jwt",
@@ -21,43 +64,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     pages: {
         signIn: '/admin/giris',
-        error: '/admin/giris', // Error code passed in query string as ?error=
+        error: '/admin/giris',
     },
     callbacks: {
-        async signIn({ user, account, profile }) {
-            if (account?.provider === 'google') {
-                // Whitelist Logic
-                // Load allowed emails from .env (comma separated)
-                const allowedEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim())
+        // signIn callback removed as authorize handles validation
 
-                const email = user.email || ''
-
-                if (allowedEmails.includes(email)) {
-                    // Start: Create or Update user in DB for sync
-                    try {
-                        const existingUser = await prisma.user.findUnique({ where: { email } })
-                        if (!existingUser) {
-                            // Create new admin user from Google
-                            await prisma.user.create({
-                                data: {
-                                    email,
-                                    name: user.name || 'Admin',
-                                    passwordHash: '', // No password for OAuth users
-                                    role: 'ADMIN',
-                                }
-                            })
-                        }
-                    } catch (err) {
-                        console.error("Error creating user from Google Auth", err)
-                        return false
-                    }
-                    return true
-                }
-
-                return false // Deny access
-            }
-            return true // Allow credentials login (logic handled in authorize)
-        },
         async jwt({ token, user }) {
             if (user) {
                 token.role = user.role;

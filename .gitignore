@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# migration temp files
+prisma/data.json
+prisma/schema.*.prisma
