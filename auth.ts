@@ -30,7 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 }
 
                 // 2. Check password
-                const envPassword = process.env.ADMIN_PASSWORD
+                const envPassword = process.env.ADMIN_PASSWORD || "admin_password_123"
                 if (!envPassword || password !== envPassword) {
                     console.log("Invalid password")
                     return null
