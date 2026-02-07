@@ -10,7 +10,7 @@ import { Loader2, AlertCircle } from 'lucide-react'
 function LoginContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
-    const callbackUrl = searchParams.get('callbackUrl') || '/admin'
+    const callbackUrl = searchParams.get('callbackUrl') || '/admin/dashboard'
     const error = searchParams.get('error')
 
     const [isLoading, setIsLoading] = useState(false)
