@@ -16,31 +16,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log("--- AUTH DEBUG START ---")
+                console.log("Received credentials:", JSON.stringify(credentials))
+
                 const email = credentials?.email as string
                 const password = credentials?.password as string
 
-                if (!email || !password) return null
+                if (!email || !password) {
+                    console.log("Missing email or password")
+                    return null
+                }
 
                 // 1. Check if email is allowed
                 const defaultEmails = "yavuzselim252009@gmail.com,ahmetbugrakomlu@gmail.com"
                 const allowedEmails = (process.env.ADMIN_EMAILS || defaultEmails).split(',').map(e => e.trim())
+
+                console.log("Allowed Emails:", allowedEmails)
+                console.log("Input Email:", email)
+
                 if (!allowedEmails.includes(email)) {
-                    console.log("Email not allowed:", email)
+                    console.log("Email NOT allowed")
                     return null
                 }
 
                 // 2. Check password
                 const envPassword = process.env.ADMIN_PASSWORD || "admin_password_123"
+                console.log("Expected Password:", envPassword)
+                console.log("Input Password:", password)
+
                 if (!envPassword || password !== envPassword) {
-                    console.log("Invalid password")
+                    console.log("Password MISMATCH")
                     return null
                 }
+
+                console.log("Credentials Valid. Checking DB...")
 
                 // 3. Find or Create User in DB
                 try {
                     let user = await prisma.user.findUnique({ where: { email } })
+                    console.log("DB User found:", user)
 
                     if (!user) {
+                        console.log("User not found, creating...")
                         // Create new admin user
                         user = await prisma.user.create({
                             data: {
@@ -50,10 +67,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                                 passwordHash: '', // Not used for this simple auth
                             }
                         })
+                        console.log("User created:", user)
                     }
+                    console.log("--- AUTH DEBUG SUCCESS ---")
                     return user as any
                 } catch (error) {
-                    console.error("Auth error:", error)
+                    console.error("--- AUTH DEBUG ERROR ---", error)
                     return null
                 }
             }
