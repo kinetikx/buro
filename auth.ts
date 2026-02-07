@@ -22,7 +22,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 if (!email || !password) return null
 
                 // 1. Check if email is allowed
-                const allowedEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim())
+                const defaultEmails = "yavuzselim252009@gmail.com,ahmetbugrakomlu@gmail.com"
+                const allowedEmails = (process.env.ADMIN_EMAILS || defaultEmails).split(',').map(e => e.trim())
                 if (!allowedEmails.includes(email)) {
                     console.log("Email not allowed:", email)
                     return null
